@@ -387,6 +387,22 @@
     { name: 'Altéré', name_en: 'Altered', chroma: 11, fifths: 5, q: 'm7♭5', deg: 'vii°', c: 7 }
   ];
 
+  var SCALE_SETS = {
+    major: MODES,
+    natural: NATURAL_MIN,
+    harmonic: HARMONIC,
+    harmajor: HARMAJOR,
+    melodic: MELODIC
+  };
+
+  var SCALE_PATTERNS = {
+    major: ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'],
+    natural: ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B'],
+    harmajor: ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'],
+    harmonic: ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B'],
+    melodic: ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B']
+  };
+
   var SHARPS = [1, 3, 6, 8, 10];
   var CX = 300, CY = 300, R = 256, RI = 178, RC = 106;
 
@@ -545,25 +561,21 @@
   var NATURAL = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
   var SCALE_IV = { major:[0,2,4,5,7,9,11], natural:[0,2,3,5,7,8,10], harmonic:[0,2,3,5,7,8,11], harmajor:[0,2,4,5,7,8,11], melodic:[0,2,3,5,7,9,11] };
 
+  function normalize12(value) {
+    return ((value % 12) + 12) % 12;
+  }
+
   function computeSpelling() {
-    // reuse previous logic but use NAMES[state.notation]
     var tonic = noteAt(state.mOffset);
-    var li = LETTERS.indexOf(( { major: ['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'],
-      natural: ['C','C♯','D','E♭','E','F','F♯','G','G♯','A','B♭','B'],
-      harmajor: ['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'],
-      harmonic: ['C','C♯','D','E♭','E','F','F♯','G','G♯','A','B♭','B'],
-      melodic: ['C','C♯','D','E♭','E','F','F♯','G','G♯','A','B♭','B'] }[state.scale][tonic].charAt(0) ) );
+    var tonicName = SCALE_PATTERNS[state.scale][tonic];
+    var li = LETTERS.indexOf(tonicName.charAt(0));
     var out = NAMES[state.notation].slice();
-    var tname = ( { major: ['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'],
-                    natural: ['C','C♯','D','E♭','E','F','F♯','G','G♯','A','B♭','B'],
-                    harmajor: ['C','D♭','D','E♭','E','F','F♯','G','A♭','A','B♭','B'],
-                    harmonic: ['C','C♯','D','E♭','E','F','F♯','G','G♯','A','B♭','B'],
-                    melodic: ['C','C♯','D','E♭','E','F','F♯','G','G♯','A','B♭','B'] }[state.scale][tonic] );
     var minorScale = state.scale !== 'major' && state.scale !== 'harmajor';
-    var flatKey = tname.indexOf('♭') !== -1 || (tname.length === 1 && (minorScale ? 'CDFG' : 'F').indexOf(tname) !== -1);
-    var flatNames = ['C','D♭','D','E♭','E','F','G♭','G','A♭','A','B♭','B'];
+    var flatKey = tonicName.indexOf('♭') !== -1 || (tonicName.length === 1 && (minorScale ? 'CDFG' : 'F').indexOf(tonicName) !== -1);
+    var flatNames = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+
     SCALE_IV[state.scale].forEach(function (iv, k) {
-      var pc = (tonic + iv) % 12;
+      var pc = normalize12(tonic + iv);
       var letter = LETTERS[(li + k) % 7];
       var acc = ((pc - NATURAL[letter] + 18) % 12) - 6;
       var sign = '';
@@ -574,6 +586,7 @@
       }
       out[pc] = name;
     });
+
     SPELL = out;
   }
 
@@ -594,9 +607,9 @@
   }
 
   // order helpers (unchanged)
-  function base(x) { x = ((x % 12) + 12) % 12; return state.order === 'chromatic' ? x : (x * 7) % 12; }
-  function slot(pc) { return base(pc) + state.offset; }
-  function noteAt(s) { return base(s - state.offset); }
+  function base(x) { x = normalize12(x); return state.order === 'chromatic' ? x : (x * 7) % 12; }
+  function slot(pc) { return normalize12(base(pc) + state.offset); }
+  function noteAt(s) { return normalize12(base(s - state.offset)); }
 
   // display name for mode depending on UI language
   function modeDisplayName(m) {
@@ -717,7 +730,7 @@
   };
 
   function voicings(pc, q) {
-    var tones = CHORD_IV[q].map(function (i) { return (pc + i) % 12; });
+    var tones = CHORD_IV[q].map(function (i) { return normalize12(pc + i); });
     var out = [], seen = {};
     function add(frets) {
       var key = frets.join(',');
@@ -765,7 +778,7 @@
     [[0, 4], [1, 9]].forEach(function (c) {
       var off = SHAPES[q][c[0] === 0 ? 'e' : 'a'];
       var vals = off.filter(function (x) { return x !== null; });
-      var r = (((pc - c[1]) % 12) + 12) % 12;
+      var r = normalize12(pc - c[1]);
       if (r + Math.min.apply(null, vals) < 0) r += 12;
       add(off.map(function (x) { return x === null ? null : r + x; }));
     });
@@ -909,7 +922,7 @@
       mtxt.textContent = nm(modeInfo.pc) + ' ' + modeInfo.name;
       var mnotes = [];
       for (var k = 0; k < 12; k++) {
-        var q = (modeInfo.pc + k) % 12;
+        var q = normalize12(modeInfo.pc + k);
         if (vis[q]) mnotes.push(nm(q));
       }
       var mtag = document.createElement('span');
@@ -925,7 +938,7 @@
       cchip.style.background = modeColor(info.pc);
       var ctxt = document.createElement('span');
       ctxt.textContent = info.label;
-      var cnotes = CHORD_IV[info.q].map(function (iv) { return nm((info.pc + iv) % 12); });
+      var cnotes = CHORD_IV[info.q].map(function (iv) { return nm(normalize12(info.pc + iv)); });
       var ctag = document.createElement('span');
       ctag.className = 'fb-deg';
       ctag.textContent = cnotes.join(' · ');
@@ -952,7 +965,7 @@
     if (info) {
       var DEG = STR[state.lang].deg;
       var DEG_OUT = STR[state.lang].degOut;
-      var iv = (pc - info.pc + 12) % 12;
+      var iv = normalize12(pc - info.pc);
       var inChord = CHORD_IV[info.q].indexOf(iv) !== -1;
       var tag = document.createElement('span');
       tag.className = inChord ? 'fb-deg' : 'fb-deg out';
@@ -962,7 +975,7 @@
       // degré de la note dans le mode, avec les mêmes termes que pour les accords
       // (référence : l'accord de 4 notes construit sur la fondamentale du mode)
       var mDEG = STR[state.lang].deg;
-      var miv = (pc - modeInfo.pc + 12) % 12;
+      var miv = normalize12(pc - modeInfo.pc);
       var minChord = CHORD_IV[modeInfo.q].indexOf(miv) !== -1;
       var dtag = document.createElement('span');
       dtag.className = minChord ? 'fb-deg' : 'fb-deg out';
@@ -979,7 +992,7 @@
     if (info) {
       var ivs = CHORD_IV[info.q];
       chordSet = {};
-      ivs.forEach(function (i) { chordSet[(info.pc + i) % 12] = true; });
+      ivs.forEach(function (i) { chordSet[normalize12(info.pc + i)] = true; });
       rootPc = info.pc;
     }
     if (pk && state.chordOnly && chordSet && !chordSet[(OPEN[pk.st] + pk.f) % 12]) { state.fbPick = pk = null; }
@@ -990,7 +1003,7 @@
     });
     for (var st = 0; st < 6; st++) {
       for (var f = 0; f <= 24; f++) {
-        var pc = (OPEN[st] + f) % 12;
+        var pc = normalize12(OPEN[st] + f);
         if (!vis[pc]) continue;
         var kind = 'plain', r = 10, cls = '', shape = null;
         if (pc === rootPc) { kind = 'sel'; r = 9; shape = 'square'; }
@@ -1045,7 +1058,7 @@
 
   // placeModes handles variable mode sets (we use cur() to decide)
   function cur() {
-    return { major: MODES, natural: NATURAL_MIN, harmonic: HARMONIC, harmajor: HARMAJOR, melodic: MELODIC }[state.scale] || MODES;
+    return SCALE_SETS[state.scale] || MODES;
   }
 
   function placeModes() {
@@ -1054,17 +1067,17 @@
     var inScale = {};
     var vis = {};
     MODEOF = {};
-    cur().forEach(function (m) { inScale[(((state.order === 'chromatic' ? m.chroma : m.fifths) + state.mOffset) % 12 + 12) % 12] = true; });
+    cur().forEach(function (m) { inScale[normalize12((state.order === 'chromatic' ? m.chroma : m.fifths) + state.mOffset)] = true; });
 
     for (var pc = 0; pc < 12; pc++) {
-      var show = !!inScale[((slot(pc) % 12) + 12) % 12];
+      var show = !!inScale[normalize12(slot(pc))];
       vis[pc] = show;
       var gn = nodes[pc].g;
       gn.classList.toggle('off', !show);
       gn.setAttribute('aria-hidden', String(!show));
       gn.setAttribute('tabindex', show ? '0' : '-1');
     }
-    if (state.selected !== null && !inScale[((slot(state.selected) % 12) + 12) % 12]) {
+    if (state.selected !== null && !inScale[normalize12(slot(state.selected))]) {
       state.selected = null;
       highlight(-1);
     }
@@ -1072,10 +1085,10 @@
     var modes = cur();
     if (pills.length !== modes.length) createPills(modes);
 
-    var sel = state.selected === null ? -1 : (((base(state.selected) + state.offset) % 12) + 12) % 12;
+    var sel = state.selected === null ? -1 : normalize12(base(state.selected) + state.offset);
     var info = null, modeInfo = null;
     modes.forEach(function (m, i) {
-      var s = (state.order === 'chromatic' ? m.chroma : m.fifths) + state.mOffset;
+      var s = normalize12((state.order === 'chromatic' ? m.chroma : m.fifths) + state.mOffset);
       var ci = m.c !== undefined ? m.c : i;
       if (state.modeSel === i) {
         var wasHidden = sectorEl.classList.contains('hidden');
@@ -1098,7 +1111,7 @@
       var y = CY + RI * Math.sin(a);
       pills[i].style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
       paint(pills[i], ci);
-      pills[i].classList.toggle('active', ((s % 12) + 12) % 12 === sel || state.modeSel === i);
+      pills[i].classList.toggle('active', (normalize12(s) === sel) || state.modeSel === i);
       var c = chords[i];
       var label = nm(noteAt(s)) + (m.q || '');
       var wc = Math.round(label.length * 6.6 + 10);
@@ -1108,9 +1121,9 @@
       c.rect.setAttribute('width', String(wc));
       c.g.style.transform = 'translate(' + (CX + RC * Math.cos(a)).toFixed(1) + 'px,' + (CY + RC * Math.sin(a)).toFixed(1) + 'px)';
       paint(c.g, ci);
-      c.g.classList.toggle('active', ((s % 12) + 12) % 12 === sel);
+      c.g.classList.toggle('active', normalize12(s) === sel);
       c.pc = noteAt(s);
-      if (((s % 12) + 12) % 12 === sel) { var tri = !state.chordOnly ? TRIAD_OF[m.q] : null; info = { pc: noteAt(s), q: tri ? tri.q : m.q, label: tri ? nm(noteAt(s)) + tri.s : label, deg: m.deg }; }
+      if (normalize12(s) === sel) { var tri = !state.chordOnly ? TRIAD_OF[m.q] : null; info = { pc: noteAt(s), q: tri ? tri.q : m.q, label: tri ? nm(noteAt(s)) + tri.s : label, deg: m.deg }; }
     });
 
     renderDiagram(info);
@@ -1164,7 +1177,7 @@
       // le premier degré de la gamme (la tonique actuelle) revient en haut et au centre du cercle
       var tonic = noteAt(state.mOffset);
       state.mOffset = Math.round(state.mOffset / 12) * 12;
-      var turn = (((-base(tonic) - state.offset) % 12) + 12) % 12;
+      var turn = normalize12(-base(tonic) - state.offset);
       if (turn > 6) turn -= 12;
       state.offset += turn;
       place();
@@ -1229,7 +1242,7 @@
     state.order = state.order === 'fifths' ? 'chromatic' : 'fifths';
     fifthsBtn.setAttribute('aria-pressed', String(state.order === 'fifths'));
     var target = state.mOffset - base(tonic);
-    var turn = (((target - state.offset) % 12) + 12) % 12;
+    var turn = normalize12(target - state.offset);
     if (turn > 6) turn -= 12;
     state.offset += turn;
     place();
@@ -1302,7 +1315,7 @@
       var k = 0;
       for (var s2 = 0; s2 < 6; s2++) {
         if (fr[s2] === null) { add('text', { x: X0 + 60, y: yOf(s2) + 8, 'class': 'tb-x' }, 'x'); continue; }
-        var pc2 = (OPEN[s2] + fr[s2]) % 12;
+        var pc2 = normalize12(OPEN[s2] + fr[s2]);
         note(X0 + 60, s2, fr[s2], pc2);
         var xa = X0 + 440 + k * 100;
         add('text', { x: xa, y: Y0 - 24, 'class': 'tb-name' }, nm(pc2));
@@ -1335,7 +1348,7 @@
     var seen = {}, entries = [];
     for (var s3 = st0; s3 < 6; s3++) {
       for (var f = lo; f <= hi; f++) {
-        var pc3 = (OPEN[s3] + f) % 12;
+        var pc3 = normalize12(OPEN[s3] + f);
         var pitch = ABS_OPEN[s3] + f;
         if (vis[pc3] && pitch >= rootPitch && !seen[pitch]) { seen[pitch] = true; entries.push({ st: s3, f: f, pc: pc3, pitch: pitch }); }
       }
