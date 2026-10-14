@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Scales &amp; Modes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f3f1f8;
+    --ink: #1d1b2e;
+    --muted: #5d5a73;
+    --track: #cdc8e0;
+    --panel: #e7e3f2;
+    --focus: #3b2fd1;
+    --l-nat: 70%;
+    --l-sharp: 44%;
+    --fbh: calc(0.14 * 100vw);
+    --dial: min(580px, max(340px, calc(100vh - var(--fbh) - 204px)));
+    --font: 'Bricolage Grotesque', 'Segoe UI Symbol', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --rot-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg fill='black' stroke='black' stroke-width='3.4' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M7 19C11 11 21 11 25 19' fill='none'/%3E%3Cpolygon points='4.8,23.5 10.1,20.6 3.9,17.4'/%3E%3Cpolygon points='27.2,23.5 28.1,17.4 21.9,20.6'/%3E%3C/g%3E%3Cg fill='white' stroke='white' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M7 19C11 11 21 11 25 19' fill='none'/%3E%3Cpolygon points='4.8,23.5 10.1,20.6 3.9,17.4'/%3E%3Cpolygon points='27.2,23.5 28.1,17.4 21.9,20.6'/%3E%3C/g%3E%3C/svg%3E") 16 16, ew-resize;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #14131f;
+      --ink: #ece9f7;
+      --muted: #a29eba;
+      --track: #34314c;
+      --panel: #201e32;
+      --focus: #b9b2ff;
+      --l-nat: 66%;
+      --l-sharp: 62%;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #14131f;
+    --ink: #ece9f7;
+    --muted: #a29eba;
+    --track: #34314c;
+    --panel: #201e32;
+    --focus: #b9b2ff;
+    --l-nat: 66%;
+    --l-sharp: 62%;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: inherit; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  main {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 18px 16px 32px;
+    text-align: center;
+  }
+  h1 {
+    margin: 0 0 12px;
+    font-size: clamp(1.1rem, 3vw, 1.45rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .lede { margin: 0 auto 22px; max-width: 34ch; color: var(--muted); }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 14px;
+    margin-bottom: 8px;
+  }
+  .seg {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--panel);
+  }
+  .seg button {
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    padding: 5px 11px;
+    cursor: pointer;
+  }
+  .top-right { position: absolute; top: calc(8px + env(safe-area-inset-top, 0px)); right: 12px; z-index: 10; display: flex; align-items: center; gap: 8px; }
+  .lang-seg { position: static; }
+  .help-btn { width: 28px; height: 28px; padding: 0; border-radius: 50%; border: 1.5px solid var(--muted); background: transparent; color: var(--ink); font: inherit; font-size: 0.85rem; font-weight: 800; line-height: 1; cursor: pointer; display: grid; place-items: center; }
+  .help-btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+  .help-btn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .seg-wrap { flex-wrap: wrap; justify-content: center; border-radius: 22px; max-width: 100%; }
+  .stage { display: grid; grid-template-columns: 1fr minmax(0, var(--dial)) 1fr; align-items: center; column-gap: 12px; width: min(96vw, 1500px); position: relative; left: 50%; transform: translateX(-50%); }
+  .stage .side { grid-column: 1; grid-row: 1; justify-self: start; align-self: start; margin-top: 22px; margin-left: calc(14px - (100vw - min(96vw, 1500px)) / 2); text-align: left; display: flex; flex-direction: row; align-items: flex-start; gap: 10px; }
+  .stage .side h1 { margin: 0; }
+  .stage .side .scale { margin: 0 0 4px; }
+  .stage .controls { flex-direction: column; align-items: stretch; flex-wrap: nowrap; margin: 0; gap: 10px; }
+  .stage .seg { flex-direction: column; flex-wrap: nowrap; border-radius: 16px; }
+  .stage .seg button { text-align: center; }
+  .stage .dial-col { grid-column: 2; grid-row: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+  .stage .dial { width: 100%; }
+  .help { position: absolute; top: calc(44px + env(safe-area-inset-top, 0px)); right: 12px; z-index: 9; width: min(280px, calc(100vw - 24px)); max-height: calc(100vh - 60px); overflow-y: auto; background: var(--panel); border-radius: 14px; padding: 12px 14px; font-size: 0.8rem; line-height: 1.45; color: var(--ink); text-align: left; box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18); }
+  .circle-toggles { display: flex; flex-direction: column; gap: 6px; margin-top: 27px; }
+  main.no-modes .pill:not(.chord), main.no-modes .track-modes, main.no-modes .sector { display: none; }
+  main.no-chords .pill.chord, main.no-chords .track-chords { display: none; }
+  .help { display: none; }
+  .help.open { display: block; }
+  .help-title { font-weight: 800; font-size: 0.85rem; margin-bottom: 6px; }
+  .help p { margin: 0 0 8px; }
+  .help p:last-child { margin-bottom: 0; }
+  .help .help-ctx { color: var(--muted); border-top: 1px solid var(--track); padding-top: 8px; }
+  .cap-label { font-size: 0.72rem; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; margin: 0 0 -4px 4px; }
+  .fb-btn-row { display: flex; justify-content: center; gap: 8px; margin: 8px 0 0; }
+  @media (max-width: 700px) {
+    .stage { display: block; width: auto; left: 0; transform: none; }
+    .stage .side { display: block; text-align: center; margin: 0; }
+    .circle-toggles { flex-direction: row; justify-content: center; margin: 8px 0 0; }
+    .stage .side h1 { margin: 0 0 6px; }
+    .stage .side .scale { margin: 0 0 8px; }
+    main { padding-top: 46px; }
+    .help { width: min(300px, calc(100vw - 24px)); }
+    .stage .cap-label { flex-basis: 100%; text-align: center; margin: 0; }
+    .stage .controls { flex-direction: row; flex-wrap: wrap; justify-content: center; align-items: center; margin-bottom: 8px; }
+    .stage .seg { flex-direction: row; flex-wrap: wrap; justify-content: center; border-radius: 22px; }
+  }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .seg button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .dial { width: 100%; max-width: var(--dial); height: auto; margin: 6px auto 0; display: block; touch-action: pan-y; user-select: none; -webkit-user-select: none; }
+  .sector { transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.25s; pointer-events: none; }
+  .sector.hidden { opacity: 0; }
+  .sector path { fill: hsl(var(--h, 0) var(--s, 72%) calc(var(--l-nat) + var(--dl, 0%)) / 0.22); stroke: hsl(var(--h, 0) var(--s, 72%) calc(var(--l-sharp) + var(--dl, 0%)) / 0.6); stroke-width: 1.5; }
+  .track { fill: none; stroke: var(--track); stroke-width: 2; }
+
+
+  .note {
+    cursor: var(--rot-cursor);
+    transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1), opacity 0.4s;
+    outline: none;
+  }
+  .note.off { opacity: 0; pointer-events: none; }
+  .dial.dragging .note, .dial.dragging .pill, .dial.dragging .sector { transition-duration: 0.15s; }
+  .dial.dragging, .dial.dragging .note, .dial.dragging .pill { cursor: var(--rot-cursor); }
+  .note .halo { fill: none; stroke: var(--ink); stroke-width: 3; opacity: 0; transition: opacity 0.15s; }
+  .note.active .halo { opacity: 1; }
+  .note:focus-visible .halo { opacity: 1; stroke: var(--focus); stroke-width: 4; }
+  .note .disc { fill: hsl(var(--h) var(--s, 72%) calc(var(--l-nat) + var(--dl, 0%))); }
+  .note .label { fill: var(--t, #1d1b2e); font-family: var(--font); font-weight: 800; pointer-events: none; }
+
+
+  .pill { cursor: var(--rot-cursor); transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1); }
+  .pill rect { fill: var(--panel); stroke: hsl(var(--h) var(--s, 72%) calc(var(--l-sharp) + var(--dl, 0%))); stroke-width: 2; transition: fill 0.2s; }
+  .pill text { fill: var(--ink); font-family: var(--font); font-size: 13px; font-weight: 600; text-anchor: middle; }
+  .pill.active rect { fill: hsl(var(--h) var(--s, 72%) calc(var(--l-nat) + var(--dl, 0%))); }
+  .pill.active text { fill: var(--t, #1d1b2e); }
+  .chord text { font-size: 12px; }
+  .chord .deg { fill: var(--muted); font-size: 9.5px; font-weight: 600; }
+
+  .pos-btn { cursor: pointer; outline: none; }
+  .pos-btn rect { fill: var(--panel); stroke: transparent; stroke-width: 2; }
+  .pos-btn text { fill: var(--ink); font-family: var(--font); font-size: 10px; font-weight: 600; text-anchor: middle; pointer-events: none; }
+  .pos-btn:hover rect { fill: var(--track); }
+  .pos-btn:focus-visible rect { stroke: var(--focus); }
+  .dg-deg { fill: var(--muted); font-family: var(--font); font-size: 10px; font-weight: 600; text-anchor: middle; }
+  .dg-line { stroke: var(--muted); stroke-width: 1; }
+  .dg-nut { stroke: var(--ink); stroke-width: 3.5; }
+  .dg-dot { fill: var(--ink); }
+  .dg-root { stroke: var(--ink); stroke-width: 1.6; }
+  .dg-mark { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linecap: round; }
+  .dg-title { fill: var(--ink); font-family: var(--font); font-weight: 800; font-size: 15px; text-anchor: middle; }
+  .dg-fr { fill: var(--muted); font-family: var(--font); font-size: 10px; text-anchor: end; }
+
+  .fb-wrap { width: 100vw; position: relative; left: 50%; transform: translateX(-50%); overflow-x: auto; margin-top: 0; padding-bottom: 4px; }
+  .fretboard { display: block; width: 100%; min-width: 640px; height: auto; }
+  .fb-board { fill: var(--panel); }
+  .fb-fret { stroke: var(--muted); stroke-opacity: 0.55; stroke-width: 2; }
+  .fb-nut { stroke: var(--ink); stroke-width: 6; }
+  .fb-string { stroke: var(--ink); stroke-opacity: 0.6; }
+  .fb-inlay { fill: var(--track); }
+  .fb-num { fill: var(--muted); font-family: var(--font); font-size: 17px; text-anchor: middle; }
+  .fb-tonic { stroke: var(--ink); stroke-width: 3; }
+  .fb-dim { opacity: 0.22; }
+  .fb-dots circle { cursor: pointer; }
+  .fb-shape { fill: none; stroke: var(--ink); stroke-width: 2.8; stroke-linejoin: round; pointer-events: none; }
+  .fb-dots .fb-pick { fill: none; stroke: var(--ink); stroke-width: 2.5; pointer-events: none; }
+  .fb-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 12px; width: 100vw; position: relative; left: 50%; transform: translateX(-50%); box-sizing: border-box; padding: 0 14px; margin: 10px 0 2px; min-height: 1.8rem; }
+  .fb-row .tab-controls { grid-column: 1; grid-row: 1; justify-self: start; }
+  .fb-row .fb-label { grid-column: 2; grid-row: 1; }
+  .fb-label { margin: 0; min-height: 1.4rem; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 7px; font-size: 0.9rem; font-weight: 800; letter-spacing: -0.01em; }
+  .fb-deg { font-size: 0.68rem; font-weight: 600; color: var(--muted); padding: 2px 8px; border-radius: 999px; background: var(--panel); letter-spacing: 0; }
+  .fb-deg.out { background: transparent; box-shadow: inset 0 0 0 1.5px var(--track); }
+  .fb-sep { color: var(--track); font-weight: 400; }
+  .fb-chip { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .fb-chord { stroke: var(--ink); stroke-width: 2.5; }
+  .fb-sel { stroke: var(--ink); stroke-width: 4; }
+
+  .fb-controls { display:flex; justify-content:center; gap:8px; margin:8px 0; }
+  main.no-fb { --dial: min(680px, max(340px, calc(100vh - 188px))); }
+  main.no-fb .fb-wrap, main.no-fb .fb-label, main.no-fb .fb-row { display: none; }
+  main.no-tab .tab-controls { display: none !important; }
+  main.no-fretboard .fb-wrap { display: none; }
+  main.no-tab .tab-wrap { display: none; }
+  .tab-wrap { width: 100vw; position: relative; left: 50%; transform: translateX(-50%); overflow-x: auto; margin-top: 0; padding-bottom: 4px; }
+  .tabsvg { display: block; width: 100%; min-width: 640px; height: auto; }
+  .tb-line { stroke: var(--muted); stroke-opacity: 0.7; stroke-width: 1.6; }
+  .tb-bar { stroke: var(--ink); stroke-width: 3; }
+  .tb-str { fill: var(--muted); font-family: var(--font); font-size: 20px; font-weight: 600; text-anchor: middle; }
+  .tb-dot { fill: var(--bg); }
+  .tb-num { fill: var(--ink); font-family: var(--font); font-size: 22px; font-weight: 800; text-anchor: middle; }
+  .tb-name { fill: var(--muted); font-family: var(--font); font-size: 20px; font-weight: 600; text-anchor: middle; }
+  .tb-x { fill: var(--muted); font-family: var(--font); font-size: 24px; font-weight: 700; text-anchor: middle; }
+  .tb-sub { fill: var(--muted); font-family: var(--font); font-size: 18px; font-weight: 600; }
+  .scale { margin: 0; font-size: 1.3rem; font-weight: 800; color: var(--ink); text-align: center; letter-spacing: -0.01em; line-height: 1.2; }
+  .page-title { position: absolute; top: calc(8px + env(safe-area-inset-top, 0px)); left: 14px; margin: 0; z-index: 10; font-size: clamp(1.1rem, 3vw, 1.45rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; text-align: left; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .note, .pill, .sector { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="top-right">
+<div class="seg keep"><button type="button" id="resetBtn" title="Réinitialiser les cercles" aria-label="Réinitialiser les cercles">Reset</button></div>
+<button type="button" id="helpBtn" class="help-btn keep" aria-pressed="false" aria-controls="help" title="Aide" aria-label="Aide">?</button>
+<div class="seg lang-seg" id="langSeg" role="group" aria-label="Language">
+  <button type="button" id="lang-fr" data-lang="fr" aria-pressed="true">FR</button>
+  <button type="button" id="lang-en" data-lang="en" aria-pressed="false">EN</button>
+</div>
+</div>
+  <aside class="help keep" id="help" aria-live="polite">
+  <div class="help-title" id="helpTitle">Aide</div>
+  <p id="helpToggles"></p>
+    <p id="helpNotes"></p>
+  <p id="helpModes"></p>
+  <p id="helpChords"></p>
+  <p id="helpFifths"></p>
+    <p id="helpReset"></p>
+  <p id="helpDiagram"></p>
+    <p id="helpTab"></p>
+  <p class="help-ctx" id="helpCtx"></p>
+  <p class="help-ctx" id="helpFb"></p>
+</aside>
+<h1 id="title" class="page-title">Scales &amp; Modes</h1>
+<main id="app" class="no-fb no-fretboard no-tab no-modes no-chords">
+  <div class="stage">
+  <div class="side">
+  <div class="controls">
+    <div class="cap-label" id="scaleCap">Sélectionner la gamme</div>
+    <div class="seg seg-wrap" role="group" aria-label="Gamme">
+      <button type="button" data-scale="major" aria-pressed="true" id="btn-major">Majeure</button>
+      <button type="button" data-scale="natural" aria-pressed="false" aria-label="Mineure naturelle" title="Mineure naturelle" id="btn-natural">Mineure nat.</button>
+      <button type="button" data-scale="harmonic" aria-pressed="false" aria-label="Mineure harmonique" title="Mineure harmonique" id="btn-harmonic">Mineure harm.</button>
+      <button type="button" data-scale="harmajor" aria-pressed="false" aria-label="Majeure harmonique" title="Majeure harmonique" id="btn-harmajor">Majeure harm.</button>
+      <button type="button" data-scale="melodic" aria-pressed="false" aria-label="Mineure mélodique" title="Mineure mélodique" id="btn-melodic">Mineure mél.</button>
+    </div>
+  </div>
+  <div class="circle-toggles keep">
+    <div class="seg"><button type="button" id="modesBtn" aria-pressed="false" title="Afficher le cercle des modes">Mode</button></div>
+    <div class="seg"><button type="button" id="chordsBtn" aria-pressed="false" title="Afficher le cercle des accords">Accords</button></div>
+  </div>
+  </div>
+
+  <div class="dial-col">
+  <p class="scale" id="scale" aria-live="polite"></p>
+  <div class="seg keep" role="group" aria-label="Quintes">
+    <button type="button" id="fifthsBtn" aria-pressed="false" title="Afficher les notes dans l’ordre du cercle des quintes">Quintes</button>
+  </div>
+  <svg class="dial" id="dial" viewBox="0 0 600 600" role="group" aria-label="Cercle des 12 notes">
+    <g id="sector" class="sector hidden" style="transform: translate(300px, 300px)">
+      <path d="M -75.06 -280.12 A 290 290 0 0 1 75.06 -280.12 L 20.7 -77.27 A 80 80 0 0 0 -20.7 -77.27 Z"></path>
+    </g>
+    <circle class="track" cx="300" cy="300" r="256"></circle>
+    <circle class="track track-modes" cx="300" cy="300" r="178"></circle>
+    <circle class="track track-chords" cx="300" cy="300" r="106"></circle>
+    <g id="diagram" transform="translate(300 300)" pointer-events="none"></g>
+    <g id="posBtn" class="pos-btn" role="button" tabindex="0" transform="translate(300 352)" display="none" aria-label="Afficher une autre position de l’accord">
+      <rect id="posRect" x="-40" y="-9" width="80" height="18" rx="9"></rect>
+      <text id="posText" x="0" y="3.6"></text>
+    </g>
+  </svg>
+  </div>
+  </div>
+
+  <div class="fb-btn-row keep" id="fbBtnRow">
+    <div class="seg" role="group" aria-label="Manche">
+      <button type="button" id="fbBtn" aria-pressed="false" title="Afficher ou masquer le manche de guitare">Manche</button>
+    </div>
+    <div class="seg" role="group" aria-label="Tablature">
+      <button type="button" id="tabBtn" aria-pressed="false" title="Afficher ou masquer la tablature">Tablature</button>
+    </div>
+  </div>
+  <div class="fb-row">
+    <div class="seg tab-controls keep" id="tabControls" style="display: none"><button type="button" id="tabPosBtn" title="Décaler vers une autre position du manche">Position 1/1</button></div>
+    <p class="fb-label" id="fbLabel" aria-live="polite"></p>
+  </div>
+  <div class="fb-wrap">
+    <svg class="fretboard" id="fretboard" viewBox="0 0 2000 280" role="img" aria-label="Manche de guitare"></svg>
+  </div>
+  <div class="tab-wrap">
+    <svg class="tabsvg" id="tabsvg" viewBox="0 0 2000 280" role="img" aria-label="Tablature de guitare"></svg>
+  </div>
+</main>
+
+<script>
+(function () {
+  var NS = 'http://www.w3.org/2000/svg';
+
+  var NAMES = {
+    fr: ['Do', 'Do♯', 'Ré', 'Ré♯', 'Mi', 'Fa', 'Fa♯', 'Sol', 'Sol♯', 'La', 'La♯', 'Si'],
+    en: ['C',  'C♯',  'D',  'D♯',  'E',  'F',  'F♯',  'G',  'G♯',  'A',  'A♯',  'B']
+  };
+
+  // palette (kept as before)
+  var PAL = [
+    { h: 8,   s: 72, dl: 0,   t: '#1d1b2e' },
+    { h: 59,  s: 72, dl: 0,   t: '#1d1b2e' },
+    { h: 110, s: 72, dl: 0,   t: '#1d1b2e' },
+    { h: 197, s: 90, dl: 8,   t: '#1d1b2e' },
+    { h: 226, s: 78, dl: -18, t: '#ffffff' },
+    { h: 335, s: 90, dl: 14,  t: '#1d1b2e' },
+    { h: 275, s: 62, dl: -22, t: '#ffffff' },
+    { h: 300, s: 78, dl: 0,   t: '#ffffff' },
+    { h: 250, s: 76, dl: -6,  t: '#ffffff' }
+  ];
+
+  // mode sets with english translations now added (name_en)
+  var MODES = [
+    { name: 'Ionien', name_en: 'Ionian', chroma: 0, fifths: 0, q: 'maj7', deg: 'I', c: 0 },
+    { name: 'Dorien', name_en: 'Dorian', chroma: 2, fifths: 2, q: 'm7', deg: 'ii', c: 1 },
+    { name: 'Phrygien', name_en: 'Phrygian', chroma: 4, fifths: 4, q: 'm7', deg: 'iii', c: 2 },
+    { name: 'Lydien', name_en: 'Lydian', chroma: 5, fifths: 11, q: 'maj7', deg: 'IV', c: 3 },
+    { name: 'Mixolydien', name_en: 'Mixolydian', chroma: 7, fifths: 1, q: '7', deg: 'V', c: 4 },
+    { name: 'Éolien', name_en: 'Aeolian', chroma: 9, fifths: 3, q: 'm7', deg: 'vi', c: 5 },
+    { name: 'Locrien', name_en: 'Locrian', chroma: 11, fifths: 5, q: 'm7♭5', deg: 'vii°', c: 6 }
+  ];
+
+  var NATURAL_MIN = [
+    { name: 'Éolien', name_en: 'Aeolian', chroma: 0, fifths: 0, q: 'm7', deg: 'i', c: 5 },
+    { name: 'Locrien', name_en: 'Locrian', chroma: 2, fifths: 2, q: 'm7♭5', deg: 'ii°', c: 6 },
+    { name: 'Ionien', name_en: 'Ionian', chroma: 3, fifths: 9, q: 'maj7', deg: 'III', c: 0 },
+    { name: 'Dorien', name_en: 'Dorian', chroma: 5, fifths: 11, q: 'm7', deg: 'iv', c: 1 },
+    { name: 'Phrygien', name_en: 'Phrygian', chroma: 7, fifths: 1, q: 'm7', deg: 'v', c: 2 },
+    { name: 'Lydien', name_en: 'Lydian', chroma: 8, fifths: 8, q: 'maj7', deg: 'VI', c: 3 },
+    { name: 'Mixolydien', name_en: 'Mixolydian', chroma: 10, fifths: 10, q: '7', deg: 'VII', c: 4 }
+  ];
+
+  var HARMONIC = [
+    { name: 'Min. harm.', name_en: 'Harmonic minor', chroma: 0, fifths: 0, q: 'mMaj7', deg: 'i', c: 5 },
+    { name: 'Locrien ♯6', name_en: 'Locrian ♯6', chroma: 2, fifths: 2, q: 'm7♭5', deg: 'ii°', c: 6 },
+    { name: 'Ionien ♯5', name_en: 'Ionian ♯5', chroma: 3, fifths: 9, q: 'maj7♯5', deg: 'III+', c: 0 },
+    { name: 'Dorien ♯4', name_en: 'Dorian ♯4', chroma: 5, fifths: 11, q: 'm7', deg: 'iv', c: 1 },
+    { name: 'Phryg. dom.', name_en: 'Phrygian dominant', chroma: 7, fifths: 1, q: '7', deg: 'V', c: 2 },
+    { name: 'Lydien ♯2', name_en: 'Lydian ♯2', chroma: 8, fifths: 8, q: 'maj7', deg: 'VI', c: 3 },
+    { name: 'Superlocrien', name_en: 'Super Locrian', chroma: 11, fifths: 5, q: '°7', deg: 'vii°', c: 8 }
+  ];
+
+  var HARMAJOR = [
+    { name: 'Ionien ♭6', name_en: 'Ionian ♭6', chroma: 0, fifths: 0, q: 'maj7', deg: 'I', c: 0 },
+    { name: 'Dorien ♭5', name_en: 'Dorian ♭5', chroma: 2, fifths: 2, q: 'm7♭5', deg: 'ii°', c: 1 },
+    { name: 'Phrygien ♭4', name_en: 'Phrygian ♭4', chroma: 4, fifths: 4, q: 'm7', deg: 'iii', c: 2 },
+    { name: 'Lydien ♭3', name_en: 'Lydian ♭3', chroma: 5, fifths: 11, q: 'mMaj7', deg: 'iv', c: 3 },
+    { name: 'Mixolydien ♭2', name_en: 'Mixolydian ♭2', chroma: 7, fifths: 1, q: '7', deg: 'V', c: 4 },
+    { name: 'Lydien ♯2♯5', name_en: 'Lydian ♯2♯5', chroma: 8, fifths: 8, q: 'maj7♯5', deg: 'VI+', c: 3 },
+    { name: 'Locrien ♭♭7', name_en: 'Locrian ♭♭7', chroma: 11, fifths: 5, q: '°7', deg: 'vii°', c: 6 }
+  ];
+
+  var MELODIC = [
+    { name: 'Min. mél.', name_en: 'Melodic minor', chroma: 0, fifths: 0, q: 'mMaj7', deg: 'i', c: 5 },
+    { name: 'Dorien ♭2', name_en: 'Dorian ♭2', chroma: 2, fifths: 2, q: 'm7', deg: 'ii', c: 1 },
+    { name: 'Lydien ♯5', name_en: 'Lydian ♯5', chroma: 3, fifths: 9, q: 'maj7♯5', deg: 'III+', c: 3 },
+    { name: 'Lydien ♭7', name_en: 'Lydian ♭7', chroma: 5, fifths: 11, q: '7', deg: 'IV', c: 3 },
+    { name: 'Mixolydien ♭6', name_en: 'Mixolydian ♭6', chroma: 7, fifths: 1, q: '7', deg: 'V', c: 4 },
+    { name: 'Locrien ♮2', name_en: 'Locrian ♮2', chroma: 9, fifths: 3, q: 'm7♭5', deg: 'vi°', c: 6 },
+    { name: 'Altéré', name_en: 'Altered', chroma: 11, fifths: 5, q: 'm7♭5', deg: 'vii°', c: 7 }
+  ];
+
+  var SCALE_SETS = {
+    major: MODES,
+    natural: NATURAL_MIN,
+    harmonic: HARMONIC,
+    harmajor: HARMAJOR,
+    melodic: MELODIC
+  };
+
+  var SCALE_PATTERNS = {
+    major: ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'],
+    natural: ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B'],
+    harmajor: ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'A♭', 'A', 'B♭', 'B'],
+    harmonic: ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B'],
+    melodic: ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B']
+  };
+
+  var SHARPS = [1, 3, 6, 8, 10];
+  var CX = 300, CY = 300, R = 256, RI = 178, RC = 106;
+
+  // translation strings
+  var STR = {
+    fr: {
+      title: 'Scales & Modes',
+      scales: { major: 'Majeure', natural: 'Mineure nat.', harmonic: 'Mineure harm.', harmajor: 'Majeure harm.', melodic: 'Mineure mél.' },
+      fifths: 'Quintes',
+      scaleCap: 'Sélectionner la gamme',
+      tabBtn: 'Tablature',
+      tabTitle: 'Afficher ou masquer la tablature',
+      tabChord: 'accord',
+      tabPosTitle: 'Décaler l’accord ou le mode vers une autre position du manche',
+      tabArp: 'arpège',
+      helpTab: 'Le bouton <b>Tablature</b> remplace le manche par une tablature : les notes de la gamme (ou du mode) à partir de la tonique, ou l’accord sélectionné, avec les numéros de cases sur les 6 cordes. Quand un mode ou un accord est sélectionné, le bouton « Position » (à gauche, sur la ligne du nom) le décale vers une autre position du manche : pour un mode, toujours à partir de la tonique et jusqu’à la case 24 ; pour un accord, vers sa position suivante. Après la dernière, il revient à la première.',
+      modesBtn: 'Mode',
+      chordsBtn: 'Accords',
+      modesTitle: 'Afficher ou masquer le cercle des modes',
+      chordsTitle: 'Afficher ou masquer le cercle des accords',
+      helpToggles: 'Au départ, seule la <b>roue des notes</b> est affichée. Les boutons <b>Mode</b> et <b>Accords</b> affichent ou masquent la roue des modes et la roue des accords.',
+      degWord: 'degré',
+      resetTitle: 'Réinitialiser les cercles',
+      helpTitle: 'Aide',
+      helpNotes: '<b>Roue des notes</b> (cercle extérieur) : appuyez sur une note et glissez vers la droite ou la gauche pour changer de note.',
+      helpModes: '<b>Roue des modes</b> (cercle du milieu) : appuyez sur un mode et glissez vers la droite ou la gauche pour changer de mode.',
+      helpChords: '<b>Roue des accords</b> (cercle intérieur) : appuyez sur un accord et glissez vers la droite ou la gauche pour changer d’accord. Elle tourne avec la roue des modes, car chaque accord reste en face de son mode.',
+      helpFifths: '<b>Quintes</b> : range les notes dans l’ordre du cercle des quintes (C, G, D, A…) au lieu de l’ordre chromatique.',
+      helpReset: '<b>Reset</b> (en haut à droite) : remet les cercles dans leur position de départ (gamme majeure, ordre chromatique, seule la roue des notes affichée, rien de sélectionné).',
+      helpDiagram: 'Au centre des cercles s’affiche le <b>diagramme de guitare</b> : l’accord de 3 notes (tonique, tierce, quinte, comme C ou Am) quand vous cliquez sur une note, l’accord de 4 notes quand vous cliquez sur un accord. Le bouton « Position » sous le diagramme fait défiler les autres positions de l’accord sur le manche.',
+      ctxNone: 'Cliquez sur une note, un mode ou un accord pour le sélectionner.',
+      ctxSel: 'Cliquez en dehors des cercles pour tout désélectionner.',
+      ctxFb: 'Sur le manche, cliquez sur un point pour voir sa note et son degré.',
+      scaleNames: { major: 'majeur', natural: 'mineur naturel', harmonic: 'mineur harmonique', harmajor: 'majeur harmonique', melodic: 'mineur mélodique' },
+      fretboard: 'Manche',
+      posBtnAria: "Afficher une autre position de l’accord",
+      positionPrefix: 'Position ',
+      scalePrefix: 'Gamme de ',
+      fretboardLabelPrefix: 'Manche de guitare, notes de la gamme : ',
+      deg: {
+        0: '1 · fondamentale', 3: '♭3 · tierce mineure', 4: '3 · tierce majeure',
+        6: '♭5 · quinte diminuée', 7: '5 · quinte juste', 8: '♯5 · quinte augmentée',
+        9: '♭♭7 · septième diminuée', 10: '♭7 · septième', 11: '7 · septième majeure'
+      },
+      degOut: {
+        1: '♭9 · neuvième mineure', 2: '9 · neuvième', 3: '♯9 · neuvième augmentée', 4: '♭11 · onzième diminuée',
+        5: '11 · onzième', 6: '♯11 · onzième augmentée', 7: '5 · quinte juste', 8: '♭13 · treizième mineure',
+        9: '13 · treizième', 10: '♭7 · septième', 11: '7 · septième majeure'
+      },
+      degMode: {
+        1: '♭2 · seconde mineure', 2: '2 · seconde', 3: '♯2 · seconde augmentée', 4: '♭4 · quarte diminuée',
+        5: '4 · quarte', 6: '♯4 · quarte augmentée', 7: '5 · quinte juste', 8: '♭6 · sixte mineure',
+        9: '6 · sixte', 10: '♭7 · septième', 11: '7 · septième majeure'
+      },
+      langFR: 'FR',
+      langEN: 'EN'
+    },
+    en: {
+      title: 'Scales & Modes',
+      scales: { major: 'Major', natural: 'Natural minor', harmonic: 'Harmonic minor', harmajor: 'Harmonic major', melodic: 'Melodic minor' },
+      fifths: 'Fifths',
+      scaleCap: 'Select the scale',
+      tabBtn: 'Tab',
+      tabTitle: 'Show or hide the tablature',
+      tabChord: 'chord',
+      tabPosTitle: 'Shift the chord or mode to another position on the neck',
+      tabArp: 'arpeggio',
+      helpTab: 'The <b>Tab</b> button replaces the fretboard with a guitar tablature: the notes of the scale (or mode) from the tonic, or the selected chord, with fret numbers on the 6 strings. When a mode or a chord is selected, the “Position” button (on the left, on the name line) shifts it to another position on the neck: for a mode, always starting from the tonic and up to fret 24; for a chord, to its next position. After the last one, it goes back to the first.',
+      modesBtn: 'Mode',
+      chordsBtn: 'Chords',
+      modesTitle: 'Show or hide the modes circle',
+      chordsTitle: 'Show or hide the chords circle',
+      helpToggles: 'At first, only the <b>notes wheel</b> is shown. The <b>Mode</b> and <b>Chords</b> buttons show or hide the modes wheel and the chords wheel.',
+      degWord: 'degree',
+      resetTitle: 'Reset the circles',
+      helpTitle: 'Help',
+      helpNotes: '<b>Notes wheel</b> (outer circle): press a note and drag to the right or left to change the note.',
+      helpModes: '<b>Modes wheel</b> (middle circle): press a mode and drag to the right or left to change the mode.',
+      helpChords: '<b>Chords wheel</b> (inner circle): press a chord and drag to the right or left to change the chord. It turns together with the modes wheel, because each chord stays facing its mode.',
+      helpFifths: '<b>Fifths</b>: arranges the notes in circle-of-fifths order (C, G, D, A…) instead of chromatic order.',
+      helpReset: '<b>Reset</b> (top right): puts the circles back to their starting position (major scale, chromatic order, only the notes wheel shown, nothing selected).',
+      helpDiagram: 'At the center of the circles, the <b>guitar chord diagram</b> appears: the 3-note chord (root, third, fifth, like C or Am) when you click a note, the 4-note chord when you click a chord. The “Position” button under the diagram cycles through other positions of the chord on the neck.',
+      ctxNone: 'Click a note, a mode or a chord to select it.',
+      ctxSel: 'Click outside the circles to clear the selection.',
+      ctxFb: 'On the fretboard, click a dot to see its note and degree.',
+      scaleNames: { major: 'major', natural: 'natural minor', harmonic: 'harmonic minor', harmajor: 'harmonic major', melodic: 'melodic minor' },
+      fretboard: 'Fretboard',
+      posBtnAria: "Show another voicing position",
+      positionPrefix: 'Position ',
+      scalePrefix: 'Scale of ',
+      fretboardLabelPrefix: 'Guitar neck, notes of the scale: ',
+      deg: {
+        0: '1 · root', 3: '♭3 · minor 3rd', 4: '3 · major 3rd',
+        6: '♭5 · diminished 5th', 7: '5 · perfect 5th', 8: '♯5 · augmented 5th',
+        9: '♭♭7 · diminished 7th', 10: '♭7 · minor 7th', 11: '7 · major 7th'
+      },
+      degOut: {
+        1: '♭9 · minor 9th', 2: '9 · 9th', 3: '♯9 · augmented 9th', 4: '♭11 · diminished 11th',
+        5: '11 · 11th', 6: '♯11 · augmented 11th', 7: '5 · perfect 5th', 8: '♭13 · minor 13th',
+        9: '13 · 13th', 10: '♭7 · minor 7th', 11: '7 · major 7th'
+      },
+      degMode: {
+        1: '♭2 · minor 2nd', 2: '2 · 2nd', 3: '♯2 · augmented 2nd', 4: '♭4 · diminished 4th',
+        5: '4 · 4th', 6: '♯4 · augmented 4th', 7: '5 · perfect 5th', 8: '♭6 · minor 6th',
+        9: '6 · 6th', 10: '♭7 · minor 7th', 11: '7 · major 7th'
+      },
+      langFR: 'FR',
+      langEN: 'EN'
+    }
+  };
+
+  var state = {
+    order: 'chromatic',
+    notation: 'en', // affects note spellings (NAMES mapping)
+    lang: 'fr',     // UI language, default French per original file history
+    selected: null,
+    offset: 0,
+    mOffset: 0,
+    scale: 'major',
+    vIdx: 0,
+    vKey: '',
+    fbPick: null,
+    chordOnly: false,
+    modeSel: null
+  };
+
+  // DOM refs
+  var dial = document.getElementById('dial');
+  var scaleEl = document.getElementById('scale');
+  var diagramEl = document.getElementById('diagram');
+  var posBtn = document.getElementById('posBtn');
+  var sectorEl = document.getElementById('sector');
+  var fbLabel = document.getElementById('fbLabel');
+  var posRect = document.getElementById('posRect');
+  var posText = document.getElementById('posText');
+
+  var btnMajor = document.getElementById('btn-major');
+  var btnNatural = document.getElementById('btn-natural');
+  var btnHarmonic = document.getElementById('btn-harmonic');
+  var btnHarmajor = document.getElementById('btn-harmajor');
+  var btnMelodic = document.getElementById('btn-melodic');
+  var fifthsBtn = document.getElementById('fifthsBtn');
+  var fbBtn = document.getElementById('fbBtn');
+  var langFrBtn = document.getElementById('lang-fr');
+  var langEnBtn = document.getElementById('lang-en');
+  var titleEl = document.getElementById('title');
+  var capEl = document.getElementById('scaleCap');
+
+  // other runtime data
+  var nodes = [], pills = [], pillParts = [], chords = [];
+  var lastInfo = null, lastN = 0;
+  var SPELL = [];
+
+  // compute spelling uses state.notation -> choose NAMES[state.notation]
+  var LETTERS = ['C','D','E','F','G','A','B'];
+  var NATURAL = { C:0, D:2, E:4, F:5, G:7, A:9, B:11 };
+  var SCALE_IV = { major:[0,2,4,5,7,9,11], natural:[0,2,3,5,7,8,10], harmonic:[0,2,3,5,7,8,11], harmajor:[0,2,4,5,7,8,11], melodic:[0,2,3,5,7,9,11] };
+
+  function normalize12(value) {
+    return ((value % 12) + 12) % 12;
+  }
+
+  function computeSpelling() {
+    var tonic = noteAt(state.mOffset);
+    var tonicName = SCALE_PATTERNS[state.scale][tonic];
+    var li = LETTERS.indexOf(tonicName.charAt(0));
+    var out = NAMES[state.notation].slice();
+    var minorScale = state.scale !== 'major' && state.scale !== 'harmajor';
+    var flatKey = tonicName.indexOf('♭') !== -1 || (tonicName.length === 1 && (minorScale ? 'CDFG' : 'F').indexOf(tonicName) !== -1);
+    var flatNames = ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B'];
+
+    SCALE_IV[state.scale].forEach(function (iv, k) {
+      var pc = normalize12(tonic + iv);
+      var letter = LETTERS[(li + k) % 7];
+      var acc = ((pc - NATURAL[letter] + 18) % 12) - 6;
+      var sign = '';
+      for (var j = 0; j < Math.abs(acc); j++) sign += acc > 0 ? '♯' : '♭';
+      var name = letter + sign;
+      if (/[♯♭]{2}/.test(name) || name === 'E♯' || name === 'B♯' || name === 'F♭' || name === 'C♭') {
+        name = (flatKey ? flatNames : NAMES[state.notation])[pc];
+      }
+      out[pc] = name;
+    });
+
+    SPELL = out;
+  }
+
+  function nm(pc) { return SPELL[pc] !== undefined ? SPELL[pc] : NAMES[state.notation][pc]; }
+
+  // paint helpers
+  function paint(el, i) {
+    var c = PAL[i];
+    el.style.setProperty('--h', String(c.h));
+    el.style.setProperty('--s', c.s + '%');
+    el.style.setProperty('--dl', c.dl + '%');
+    el.style.setProperty('--t', c.t);
+  }
+  var MODEOF = {};
+  function modeColor(pc) {
+    var c = PAL[MODEOF[pc] !== undefined ? MODEOF[pc] : 0];
+    return 'hsl(' + c.h + ' ' + c.s + '% calc(var(--l-nat) + ' + c.dl + '%))';
+  }
+
+  // order helpers (unchanged)
+  function base(x) { x = normalize12(x); return state.order === 'chromatic' ? x : (x * 7) % 12; }
+  function slot(pc) { return normalize12(base(pc) + state.offset); }
+  function noteAt(s) { return normalize12(base(s - state.offset)); }
+
+  // display name for mode depending on UI language
+  function modeDisplayName(m) {
+    if (!m) return '';
+    return state.lang === 'en' && m.name_en ? m.name_en : m.name;
+  }
+
+  // build UI elements (notes + default pills)
+  function build() {
+    buildFretboard();
+
+    // create 12 note nodes
+    for (var pc = 0; pc < 12; pc++) {
+      (function (pc) {
+        var sharp = SHARPS.indexOf(pc) !== -1;
+        var r = sharp ? 25 : 30;
+        var g = document.createElementNS(NS, 'g');
+        g.setAttribute('class', 'note' + (sharp ? ' sharp' : ''));
+        g.setAttribute('role', 'button');
+        g.setAttribute('tabindex', '0');
+        paint(g, 0);
+
+        var halo = document.createElementNS(NS, 'circle');
+        halo.setAttribute('class', 'halo');
+        halo.setAttribute('r', String(r + 8));
+        var disc = document.createElementNS(NS, 'circle');
+        disc.setAttribute('class', 'disc');
+        disc.setAttribute('r', String(r));
+        var label = document.createElementNS(NS, 'text');
+        label.setAttribute('class', 'label');
+        label.setAttribute('text-anchor', 'middle');
+        label.setAttribute('dy', '0.35em');
+        label.setAttribute('font-size', sharp ? '15' : '20');
+
+        g.appendChild(halo);
+        g.appendChild(disc);
+        g.appendChild(label);
+        dial.appendChild(g);
+
+        g.addEventListener('click', function () { if (suppressClick) return; choose(pc); });
+        g.addEventListener('pointerdown', function (e) {
+          if (e.pointerType === 'mouse' && e.button !== 0) return;
+          drag = { kind: 'notes', id: e.pointerId, x0: e.clientX, off0: state.offset, moved: false };
+        });
+        g.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); choose(pc); }
+        });
+        nodes[pc] = { g: g, label: label };
+      })(pc);
+    }
+
+    // create initial pills for default mode set
+    createPills(MODES);
+    place();
+    relabel();
+  }
+
+  // create pills and chord elements for a given mode array
+  function createPills(modes) {
+    // remove old pills/chords
+    (pills || []).forEach(function (p) { if (p && p.parentNode) p.parentNode.removeChild(p); });
+    (chords || []).forEach(function (c) { if (c && c.g && c.g.parentNode) c.g.parentNode.removeChild(c.g); });
+    pills = []; pillParts = []; chords = [];
+
+    modes.forEach(function (m, i) {
+      var g = document.createElementNS(NS, 'g'); g.setAttribute('class', 'pill');
+      var w = Math.round(modeDisplayName(m).length * 7.4 + 18);
+      var rect = document.createElementNS(NS, 'rect');
+      rect.setAttribute('x', String(-w / 2));
+      rect.setAttribute('y', '-12');
+      rect.setAttribute('width', String(w));
+      rect.setAttribute('height', '24');
+      rect.setAttribute('rx', '12');
+      var t = document.createElementNS(NS, 'text'); t.setAttribute('dy', '0.35em'); t.textContent = modeDisplayName(m);
+      g.appendChild(rect); g.appendChild(t); dial.appendChild(g);
+      (function (idx) { g.addEventListener('pointerdown', startModeDrag); g.addEventListener('click', function () { if (!suppressClick) chooseMode(idx); }); })(i);
+      pills[i] = g; pillParts[i] = { rect: rect, t: t };
+
+      // chord pill
+      var cg = document.createElementNS(NS, 'g'); cg.setAttribute('class', 'pill chord');
+      var crect = document.createElementNS(NS, 'rect'); crect.setAttribute('y', '-15'); crect.setAttribute('height', '30'); crect.setAttribute('rx', '13');
+      var cdg = document.createElementNS(NS, 'text'); cdg.setAttribute('class', 'deg'); cdg.setAttribute('y', '-7.5'); cdg.setAttribute('dy', '0.35em');
+      var ct = document.createElementNS(NS, 'text'); ct.setAttribute('y', '6'); ct.setAttribute('dy', '0.35em');
+      cg.appendChild(crect); cg.appendChild(cdg); cg.appendChild(ct); dial.appendChild(cg);
+      cg.addEventListener('pointerdown', startModeDrag);
+      (function (idx) { cg.addEventListener('click', function () { if (suppressClick || !chords[idx] || chords[idx].pc === null) return; choose(chords[idx].pc, true); }); })(i);
+      chords[i] = { g: cg, rect: crect, t: ct, dg: cdg, pc: null };
+    });
+  }
+
+  // place notes and pills visually
+  function place() {
+    for (var pc = 0; pc < 12; pc++) {
+      var a = (-90 + slot(pc) * 30) * Math.PI / 180;
+      var x = CX + R * Math.cos(a);
+      var y = CY + R * Math.sin(a);
+      nodes[pc].g.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+    }
+    placeModes();
+  }
+
+  // voicings / diagram / fretboard (keeping previous logic)...
+  var OPEN = [4, 9, 2, 7, 11, 4];
+  var CHORD_IV = { 'maj7': [0, 4, 7, 11], 'm7': [0, 3, 7, 10], '7': [0, 4, 7, 10], 'm7♭5': [0, 3, 6, 10], 'mMaj7': [0, 3, 7, 11], 'maj7♯5': [0, 4, 8, 11], '°7': [0, 3, 6, 9],
+    'M': [0, 4, 7], 'm': [0, 3, 7], 'dim': [0, 3, 6], 'aug': [0, 4, 8] };
+  var SHAPES = {
+    'maj7':   { e: [0, null, 1, 1, 0, null],   a: [null, 0, 2, 1, 2, null] },
+    'm7':     { e: [0, null, 0, 0, 0, null],   a: [null, 0, 2, 0, 1, 0] },
+    '7':      { e: [0, null, 0, 1, 0, null],   a: [null, 0, 2, 0, 2, 0] },
+    'm7♭5':   { e: [0, null, 0, 0, -1, null],  a: [null, 0, 1, 0, 1, null] },
+    'mMaj7':  { e: [0, null, 1, 0, 0, null],   a: [null, 0, 2, 1, 1, 0] },
+    'maj7♯5': { e: [0, null, 1, 1, 1, null],   a: [null, 0, -1, -2, -3, null] },
+    '°7':     { e: [0, null, -1, 0, -1, null], a: [null, 0, 1, -1, 1, null] },
+    'M':      { e: [0, 2, 2, 1, 0, 0],         a: [null, 0, 2, 2, 2, 0] },
+    'm':      { e: [0, 2, 2, 0, 0, 0],         a: [null, 0, 2, 2, 1, 0] },
+    'dim':    { e: [0, 1, 2, 0, null, null],   a: [null, 0, 1, 2, 1, null] },
+    'aug':    { e: [0, 3, 2, 1, 1, 0],         a: [null, 0, 3, 2, 2, 1] }
+  };
+
+  function voicings(pc, q) {
+    var tones = CHORD_IV[q].map(function (i) { return normalize12(pc + i); });
+    var out = [], seen = {};
+    function add(frets) {
+      var key = frets.join(',');
+      if (seen[key]) return;
+      var played = frets.filter(function (f) { return f !== null; });
+      var fretted = played.filter(function (f) { return f > 0; });
+      var hasOpen = played.indexOf(0) !== -1;
+      var maxF = Math.max.apply(null, played);
+      var minF = fretted.length ? Math.min.apply(null, fretted) : 0;
+      if (maxF > 15 || Math.min.apply(null, played) < 0) return;
+      if (fretted.length && maxF - minF > 3) return;
+      if (hasOpen && maxF > 4) return;
+      seen[key] = true;
+      out.push({ frets: frets, pos: hasOpen ? 0 : minF });
+    }
+    function covers(frets) {
+      var have = {};
+      frets.forEach(function (f, i) { if (f !== null) have[(OPEN[i] + f) % 12] = true; });
+      return tones.every(function (t) { return have[t]; });
+    }
+    var sizes = tones.length === 3 ? [3, 4] : [4];
+    sizes.forEach(function (n) {
+      for (var st = 0; st + n <= 6; st++) {
+        (function () {
+          var opts = [];
+          for (var j = 0; j < n; j++) {
+            var o = [];
+            for (var f = 0; f <= 15; f++) if (tones.indexOf((OPEN[st + j] + f) % 12) !== -1) o.push(f);
+            opts.push(o);
+          }
+          function rec(j, cur) {
+            if (j === n) {
+              var frets = [null, null, null, null, null, null];
+              for (var k = 0; k < n; k++) frets[st + k] = cur[k];
+              if (covers(frets)) add(frets);
+              return;
+            }
+            opts[j].forEach(function (v) { rec(j + 1, cur.concat([v])); });
+          }
+          rec(0, []);
+        })();
+      }
+    });
+    [[0, 4], [1, 9]].forEach(function (c) {
+      var off = SHAPES[q][c[0] === 0 ? 'e' : 'a'];
+      var vals = off.filter(function (x) { return x !== null; });
+      var r = normalize12(pc - c[1]);
+      if (r + Math.min.apply(null, vals) < 0) r += 12;
+      add(off.map(function (x) { return x === null ? null : r + x; }));
+    });
+    out = out.filter(function (v) {
+      var low = v.frets.findIndex(function (f) { return f !== null; });
+      return (OPEN[low] + v.frets[low]) % 12 === pc;
+    });
+    out = out.filter(function (v) {
+      return !out.some(function (w) {
+        return w !== v &&
+          v.frets.every(function (f, i) { return f === null || w.frets[i] === f; }) &&
+          w.frets.some(function (f, i) { return f !== null && v.frets[i] === null; });
+      });
+    });
+    out.sort(function (x, y) { return x.pos - y.pos; });
+    return out;
+  }
+  // accord de 3 notes (tonique, tierce, quinte) correspondant à chaque accord de 4 notes
+  var TRIAD_OF = {
+    'maj7': { q: 'M', s: '' }, 'm7': { q: 'm', s: 'm' }, '7': { q: 'M', s: '' }, 'm7♭5': { q: 'dim', s: '°' },
+    'mMaj7': { q: 'm', s: 'm' }, 'maj7♯5': { q: 'aug', s: '+' }, '°7': { q: 'dim', s: '°' }
+  };
+
+  function renderDiagram(info) {
+    while (diagramEl.firstChild) diagramEl.removeChild(diagramEl.firstChild);
+    lastInfo = info;
+    if (!info) { lastN = 0; posBtn.setAttribute('display', 'none'); return; }
+    var list = voicings(info.pc, info.q);
+    var key = info.pc + '|' + info.q;
+    if (state.vKey !== key) { state.vKey = key; state.vIdx = 0; }
+    lastN = list.length;
+    state.vIdx = state.vIdx % list.length;
+    var frets = list[state.vIdx].frets;
+    var label = STR[state.lang].positionPrefix + (state.vIdx + 1) + '/' + list.length;
+    var bw = Math.round(label.length * 5.4 + 22);
+    posText.textContent = label;
+    posRect.setAttribute('x', String(-bw / 2));
+    posRect.setAttribute('width', String(bw));
+    posBtn.setAttribute('display', list.length > 1 ? 'inline' : 'none');
+    var fretted = frets.filter(function (f) { return f !== null && f > 0; });
+    var maxF = Math.max.apply(null, fretted.concat([0]));
+    var minF = fretted.length ? Math.min.apply(null, fretted) : 1;
+    var start = maxF <= 5 ? 1 : minF;
+    var SG = 13, RH = 14, X0 = -32.5, Y0 = -34, ROWS = 5, MY = -42;
+
+    function add(tag, attrs, text) {
+      var e = document.createElementNS(NS, tag);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      if (text) e.textContent = text;
+      diagramEl.appendChild(e);
+      return e;
+    }
+    for (var k = 0; k <= ROWS; k++) {
+      add('line', { x1: X0, y1: Y0 + k * RH, x2: X0 + 5 * SG, y2: Y0 + k * RH, 'class': (k === 0 && start === 1) ? 'dg-nut' : 'dg-line' });
+    }
+    for (var i = 0; i < 6; i++) {
+      add('line', { x1: X0 + i * SG, y1: Y0, x2: X0 + i * SG, y2: Y0 + ROWS * RH, 'class': 'dg-line' });
+    }
+    if (start > 1) add('text', { x: X0 - 5, y: Y0 + RH / 2 + 3.5, 'class': 'dg-fr' }, start + ' fr');
+
+    var bar = [];
+    frets.forEach(function (f, i) { if (f !== null && f === minF && f > 0) bar.push(i); });
+    if (bar.length >= 3 && minF - start < ROWS) {
+      add('rect', {
+        x: X0 + bar[0] * SG - 5, y: Y0 + (minF - start) * RH + 2.5,
+        width: (bar[bar.length - 1] - bar[0]) * SG + 10, height: RH - 5, rx: 4.5, 'class': 'dg-dot'
+      });
+    }
+    var rootColor = modeColor(info.pc);
+    frets.forEach(function (f, i) {
+      var x = X0 + i * SG;
+      if (f === null) {
+        add('line', { x1: x - 3.5, y1: MY - 3.5, x2: x + 3.5, y2: MY + 3.5, 'class': 'dg-mark' });
+        add('line', { x1: x - 3.5, y1: MY + 3.5, x2: x + 3.5, y2: MY - 3.5, 'class': 'dg-mark' });
+      } else if (f === 0) {
+        add('circle', { cx: x, cy: MY, r: 3.6, 'class': 'dg-mark' });
+      } else {
+        var row = f - start;
+        if (row < 0 || row >= ROWS) return;
+        var isRoot = (OPEN[i] + f) % 12 === info.pc;
+        var d = add('circle', { cx: x, cy: Y0 + (row + 0.5) * RH, r: 5, 'class': isRoot ? 'dg-dot dg-root' : 'dg-dot' });
+        if (isRoot) d.setAttribute('style', 'fill: ' + rootColor);
+      }
+    });
+    add('text', { x: 0, y: -68, 'class': 'dg-deg' }, info.deg || '');
+    add('text', { x: 0, y: -54, 'class': 'dg-title' }, info.label || '');
+  }
+
+  function buildFretboard() {
+    var svg = document.getElementById('fretboard');
+    FB.svg = svg;
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    svg.setAttribute('viewBox', '0 0 2000 280');
+    function add(tag, attrs, text) {
+      var e = document.createElementNS(NS, tag);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      if (text) e.textContent = text;
+      svg.appendChild(e);
+      return e;
+    }
+    var xe = fx(24);
+    add('path', {
+      d: 'M ' + FB.x0 + ' ' + (FB.cy - FB.hn / 2) + ' L ' + xe + ' ' + (FB.cy - FB.he / 2) +
+         ' L ' + xe + ' ' + (FB.cy + FB.he / 2) + ' L ' + FB.x0 + ' ' + (FB.cy + FB.hn / 2) + ' Z',
+      'class': 'fb-board'
+    });
+    [3, 5, 7, 9, 15, 17, 19, 21].forEach(function (n) {
+      add('circle', { cx: (fx(n - 1) + fx(n)) / 2, cy: FB.cy, r: 9, 'class': 'fb-inlay' });
+    });
+    [12, 24].forEach(function (n) {
+      var xm = (fx(n - 1) + fx(n)) / 2;
+      [-1, 1].forEach(function (sg) {
+        add('circle', { cx: xm, cy: FB.cy + sg * fw(xm) / 4, r: 9, 'class': 'fb-inlay' });
+      });
+    });
+    for (var n = 1; n <= 24; n++) {
+      var x = fx(n), h = fw(x) / 2;
+      add('line', { x1: x, y1: FB.cy - h, x2: x, y2: FB.cy + h, 'class': 'fb-fret' });
+    }
+    add('line', { x1: FB.x0, y1: FB.cy - FB.hn / 2, x2: FB.x0, y2: FB.cy + FB.hn / 2, 'class': 'fb-nut' });
+    var widths = [3.4, 2.8, 2.2, 1.7, 1.3, 1.0];
+    for (var st = 0; st < 6; st++) add('line', { x1: FB.x0, y1: fy(st, FB.x0), x2: xe, y2: fy(st, xe), 'stroke-width': widths[st], 'class': 'fb-string' });
+    [3, 5, 7, 9, 12, 15, 17, 19, 21, 24].forEach(function (n) {
+      add('text', { x: (fx(n - 1) + fx(n)) / 2, y: FB.cy + FB.he / 2 + 22, 'class': 'fb-num' }, String(n));
+    });
+    FB.dots = add('g', { 'aria-hidden': 'true', 'class': 'fb-dots' });
+  }
+
+  var FB = { x0: 40, W: 1948, cy: 134, hn: 172, he: 228, inset: 14, svg: null, dots: null };
+  function fx(n) { return FB.x0 + FB.W * (1 - Math.pow(2, -n / 12)) / 0.75; }
+  function fw(x) { return FB.hn + (FB.he - FB.hn) * ((x - FB.x0) / FB.W); }
+  function fy(st, x) { return FB.cy + (2.5 - st) * ((fw(x) - 2 * FB.inset) / 5); }
+
+  function updateFbLabel(info, modeInfo, vis) {
+    while (fbLabel.firstChild) fbLabel.removeChild(fbLabel.firstChild);
+    if (modeInfo) {
+      var mchip = document.createElement('span');
+      mchip.className = 'fb-chip';
+      mchip.style.background = modeColor(modeInfo.pc);
+      var mtxt = document.createElement('span');
+      mtxt.textContent = nm(modeInfo.pc) + ' ' + modeInfo.name;
+      var mnotes = [];
+      for (var k = 0; k < 12; k++) {
+        var q = normalize12(modeInfo.pc + k);
+        if (vis[q]) mnotes.push(nm(q));
+      }
+      var mtag = document.createElement('span');
+      mtag.className = 'fb-deg';
+      mtag.textContent = mnotes.join(' · ');
+      fbLabel.appendChild(mchip);
+      fbLabel.appendChild(mtxt);
+      fbLabel.appendChild(mtag);
+    } else if (info) {
+      var cchip = document.createElement('span');
+      cchip.className = 'fb-chip';
+      cchip.style.background = modeColor(info.pc);
+      var ctxt = document.createElement('span');
+      ctxt.textContent = info.label;
+      var cnotes = CHORD_IV[info.q].map(function (iv) { return nm(normalize12(info.pc + iv)); });
+      var ctag = document.createElement('span');
+      ctag.className = 'fb-deg';
+      ctag.textContent = cnotes.join(' · ');
+      fbLabel.appendChild(cchip);
+      fbLabel.appendChild(ctxt);
+      fbLabel.appendChild(ctag);
+    }
+    var pk = state.fbPick;
+    if (!pk) return;
+    if (modeInfo || info) {
+      var sep = document.createElement('span');
+      sep.className = 'fb-sep';
+      sep.textContent = '|';
+      fbLabel.appendChild(sep);
+    }
+    var pc = (OPEN[pk.st] + pk.f) % 12;
+    var chip = document.createElement('span');
+    chip.className = 'fb-chip';
+    chip.style.background = modeColor(pc);
+    var txt = document.createElement('span');
+    txt.textContent = nm(pc);
+    fbLabel.appendChild(chip);
+    fbLabel.appendChild(txt);
+    if (info) {
+      var DEG = STR[state.lang].deg;
+      var DEG_OUT = STR[state.lang].degOut;
+      var iv = normalize12(pc - info.pc);
+      var inChord = CHORD_IV[info.q].indexOf(iv) !== -1;
+      var tag = document.createElement('span');
+      tag.className = inChord ? 'fb-deg' : 'fb-deg out';
+      tag.textContent = (inChord ? DEG[iv] : DEG_OUT[iv]);
+      fbLabel.appendChild(tag);
+    } else if (modeInfo) {
+      var mDEG = STR[state.lang].deg;
+      var miv = normalize12(pc - modeInfo.pc);
+      var minChord = CHORD_IV[modeInfo.q].indexOf(miv) !== -1;
+      var dtag = document.createElement('span');
+      dtag.className = minChord ? 'fb-deg' : 'fb-deg out';
+      dtag.textContent = (minChord ? mDEG[miv] : STR[state.lang].degMode[miv]);
+      fbLabel.appendChild(dtag);
+    }
+  }
+
+  function renderFretboard(vis, tonic, info, modeInfo) {
+    while (FB.dots.firstChild) FB.dots.removeChild(FB.dots.firstChild);
+    var pk = state.fbPick;
+    if (pk && !vis[(OPEN[pk.st] + pk.f) % 12]) { state.fbPick = pk = null; }
+    var chordSet = null, rootPc = modeInfo ? modeInfo.pc : tonic;
+    if (info) {
+      var ivs = CHORD_IV[info.q];
+      chordSet = {};
+      ivs.forEach(function (i) { chordSet[normalize12(info.pc + i)] = true; });
+      rootPc = info.pc;
+    }
+    if (pk && state.chordOnly && chordSet && !chordSet[(OPEN[pk.st] + pk.f) % 12]) { state.fbPick = pk = null; }
+    var layer = {};
+    ['dim', 'plain', 'chord', 'sel', 'pick'].forEach(function (k) {
+      layer[k] = document.createElementNS(NS, 'g');
+      FB.dots.appendChild(layer[k]);
+    });
+    for (var st = 0; st < 6; st++) {
+      for (var f = 0; f <= 24; f++) {
+        var pc = normalize12(OPEN[st] + f);
+        if (!vis[pc]) continue;
+        var kind = 'plain', r = 10, cls = '', shape = null;
+        if (pc === rootPc) { kind = 'sel'; r = 9; shape = 'square'; }
+        else if (chordSet) {
+          if (chordSet[pc]) { kind = 'chord'; r = 11; cls = 'fb-chord'; }
+          else { if (state.chordOnly) continue; kind = 'dim'; cls = 'fb-dim'; }
+        }
+        var cx = f === 0 ? FB.x0 - 17 : (fx(f - 1) + fx(f)) / 2;
+        var cy = fy(st, cx);
+        var c = document.createElementNS(NS, 'circle');
+        c.setAttribute('cx', String(cx));
+        c.setAttribute('cy', String(cy));
+        c.setAttribute('r', String(r));
+        c.setAttribute('style', 'fill: ' + modeColor(pc));
+        if (cls) c.setAttribute('class', cls);
+        (function (st0, f0) {
+          c.addEventListener('click', function (ev) {
+            ev.stopPropagation();
+            var same = state.fbPick && state.fbPick.st === st0 && state.fbPick.f === f0;
+            state.fbPick = same ? null : { st: st0, f: f0 };
+            renderFretboard(vis, tonic, info, modeInfo);
+          });
+        })(st, f);
+        layer[kind].appendChild(c);
+        if (shape === 'square') {
+          var sq = document.createElementNS(NS, 'rect');
+          sq.setAttribute('x', String(cx - 12));
+          sq.setAttribute('y', String(cy - 12));
+          sq.setAttribute('width', '24');
+          sq.setAttribute('height', '24');
+          sq.setAttribute('rx', '2');
+          sq.setAttribute('class', 'fb-shape');
+          layer[kind].appendChild(sq);
+        }
+        if (pk && pk.st === st && pk.f === f) {
+          var h = document.createElementNS(NS, 'circle');
+          h.setAttribute('cx', String(cx));
+          h.setAttribute('cy', String(cy));
+          h.setAttribute('r', String(shape === 'square' ? 18 : r + 6));
+          h.setAttribute('class', 'fb-pick');
+          layer.pick.appendChild(h);
+        }
+      }
+    }
+    var names = [];
+    for (var p = 0; p < 12; p++) if (vis[p]) names.push(nm(p));
+    FB.svg.setAttribute('aria-label', STR[state.lang].fretboardLabelPrefix + names.join(', ') +
+      (info ? '. ' + (state.lang === 'fr' ? 'Accord sélectionné : ' : 'Selected chord: ') + info.label : '') +
+      (modeInfo ? '. ' + (state.lang === 'fr' ? 'Mode sélectionné : ' : 'Selected mode: ') + nm(modeInfo.pc) + ' ' + modeInfo.name : ''));
+    updateFbLabel(info, modeInfo, vis);
+  }
+
+  function cur() {
+    return SCALE_SETS[state.scale] || MODES;
+  }
+
+  function placeModes() {
+    computeSpelling();
+    labelNotes();
+    var inScale = {};
+    var vis = {};
+    MODEOF = {};
+    cur().forEach(function (m) { inScale[normalize12((state.order === 'chromatic' ? m.chroma : m.fifths) + state.mOffset)] = true; });
+
+    for (var pc = 0; pc < 12; pc++) {
+      var show = !!inScale[normalize12(slot(pc))];
+      vis[pc] = show;
+      var gn = nodes[pc].g;
+      gn.classList.toggle('off', !show);
+      gn.setAttribute('aria-hidden', String(!show));
+      gn.setAttribute('tabindex', show ? '0' : '-1');
+    }
+    if (state.selected !== null && !inScale[normalize12(slot(state.selected))]) {
+      state.selected = null;
+      highlight(-1);
+    }
+    var modes = cur();
+    if (pills.length !== modes.length) createPills(modes);
+
+    var sel = state.selected === null ? -1 : normalize12(base(state.selected) + state.offset);
+    var info = null, modeInfo = null;
+    modes.forEach(function (m, i) {
+      var s = normalize12((state.order === 'chromatic' ? m.chroma : m.fifths) + state.mOffset);
+      var ci = m.c !== undefined ? m.c : i;
+      if (state.modeSel === i) {
+        var wasHidden = sectorEl.classList.contains('hidden');
+        if (wasHidden) sectorEl.style.transition = 'none';
+        sectorEl.style.transform = 'translate(300px, 300px) rotate(' + (s * 30) + 'deg)';
+        paint(sectorEl, ci);
+        sectorEl.classList.remove('hidden');
+        if (wasHidden) { sectorEl.getBoundingClientRect(); sectorEl.style.transition = ''; }
+      }
+      if (state.modeSel === i) modeInfo = { pc: noteAt(s), name: modeDisplayName(m), q: m.q };
+      MODEOF[noteAt(s)] = ci;
+      paint(nodes[noteAt(s)].g, ci);
+      var pp = pillParts[i];
+      var wp = Math.round(modeDisplayName(m).length * 6.5 + 14);
+      pp.t.textContent = modeDisplayName(m);
+      pp.rect.setAttribute('x', String(-wp / 2));
+      pp.rect.setAttribute('width', String(wp));
+      var a = (-90 + s * 30) * Math.PI / 180;
+      var x = CX + RI * Math.cos(a);
+      var y = CY + RI * Math.sin(a);
+      pills[i].style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+      paint(pills[i], ci);
+      pills[i].classList.toggle('active', (normalize12(s) === sel) || state.modeSel === i);
+      var c = chords[i];
+      var label = nm(noteAt(s)) + (m.q || '');
+      var wc = Math.round(label.length * 6.6 + 10);
+      c.t.textContent = label;
+      c.dg.textContent = m.deg || '';
+      c.rect.setAttribute('x', String(-wc / 2));
+      c.rect.setAttribute('width', String(wc));
+      c.g.style.transform = 'translate(' + (CX + RC * Math.cos(a)).toFixed(1) + 'px,' + (CY + RC * Math.sin(a)).toFixed(1) + 'px)';
+      paint(c.g, ci);
+      c.g.classList.toggle('active', normalize12(s) === sel);
+      c.pc = noteAt(s);
+      if (normalize12(s) === sel) { var tri = !state.chordOnly ? TRIAD_OF[m.q] : null; info = { pc: noteAt(s), q: tri ? tri.q : m.q, label: tri ? nm(noteAt(s)) + tri.s : label, deg: m.deg }; }
+    });
+
+    renderDiagram(info);
+    renderFretboard(vis, noteAt(state.mOffset), info, modeInfo);
+    renderTab(vis, noteAt(state.mOffset), info, modeInfo);
+    sectorEl.classList.toggle('hidden', !modeInfo);
+    if (modeInfo) highlight(modeInfo.pc);
+
+    scaleEl.textContent = STR[state.lang].scalePrefix + nm(noteAt(state.mOffset)) + ' ' + (STR[state.lang].scaleNames[state.scale] || '');
+    refreshHelp();
+  }
+
+  function labelNotes() {
+    for (var pc = 0; pc < 12; pc++) {
+      var name = nm(pc);
+      var accidental = SHARPS.indexOf(pc) !== -1;
+      nodes[pc].label.textContent = name;
+      nodes[pc].label.setAttribute('font-size', accidental ? (name.length > 2 ? '12' : '15') : (name.length > 2 ? '15' : '20'));
+      nodes[pc].g.setAttribute('aria-label', name);
+    }
+  }
+
+  function highlight(pc) {
+    for (var i = 0; i < 12; i++) nodes[i].g.classList.toggle('active', i === pc);
+  }
+
+  function chooseMode(i) {
+    state.modeSel = i;
+    state.selected = null;
+    state.chordOnly = false;
+    state.fbPick = null;
+    highlight(-1);
+    placeModes();
+  }
+
+  function choose(pc, chordOnly) {
+    state.modeSel = null;
+    state.selected = pc;
+    state.chordOnly = !!chordOnly;
+    highlight(pc);
+    placeModes();
+  }
+
+  document.querySelectorAll('[data-scale]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      state.scale = b.getAttribute('data-scale');
+      document.querySelectorAll('[data-scale]').forEach(function (o) {
+        o.setAttribute('aria-pressed', String(o === b));
+      });
+      var tonic = noteAt(state.mOffset);
+      state.mOffset = Math.round(state.mOffset / 12) * 12;
+      var turn = normalize12(-base(tonic) - state.offset);
+      if (turn > 6) turn -= 12;
+      state.offset += turn;
+      place();
+    });
+  });
+
+  var modesBtn = document.getElementById('modesBtn');
+  var chordsBtn = document.getElementById('chordsBtn');
+  var appEl = document.getElementById('app');
+  var showModes = false, showChords = false;
+  modesBtn.addEventListener('click', function () {
+    showModes = !showModes;
+    modesBtn.setAttribute('aria-pressed', String(showModes));
+    appEl.classList.toggle('no-modes', !showModes);
+    if (!showModes) state.modeSel = null;
+    placeModes();
+  });
+  chordsBtn.addEventListener('click', function () {
+    showChords = !showChords;
+    chordsBtn.setAttribute('aria-pressed', String(showChords));
+    appEl.classList.toggle('no-chords', !showChords);
+    placeModes();
+  });
+
+  var helpBtn = document.getElementById('helpBtn');
+  var helpPanel = document.getElementById('help');
+  var helpOpen = false;
+  helpBtn.addEventListener('click', function () {
+    helpOpen = !helpOpen;
+    helpPanel.classList.toggle('open', helpOpen);
+    helpBtn.setAttribute('aria-pressed', String(helpOpen));
+  });
+
+  var resetBtn = document.getElementById('resetBtn');
+  resetBtn.addEventListener('click', function () {
+    state.offset = 0;
+    state.mOffset = 0;
+    state.scale = 'major';
+    document.querySelectorAll('[data-scale]').forEach(function (o) {
+      o.setAttribute('aria-pressed', String(o.getAttribute('data-scale') === 'major'));
+    });
+    state.order = 'chromatic';
+    fifthsBtn.setAttribute('aria-pressed', 'false');
+    state.selected = null; state.fbPick = null; state.chordOnly = false; state.modeSel = null;
+    showModes = false; showChords = false;
+    modesBtn.setAttribute('aria-pressed', 'false');
+    chordsBtn.setAttribute('aria-pressed', 'false');
+    appEl.classList.add('no-modes');
+    appEl.classList.add('no-chords');
+    highlight(-1);
+    place();
+  });
+
+  fifthsBtn.addEventListener('click', function () {
+    var tonic = noteAt(state.mOffset);
+    state.order = state.order === 'fifths' ? 'chromatic' : 'fifths';
+    fifthsBtn.setAttribute('aria-pressed', String(state.order === 'fifths'));
+    var target = state.mOffset - base(tonic);
+    var turn = normalize12(target - state.offset);
+    if (turn > 6) turn -= 12;
+    state.offset += turn;
+    place();
+    relabel();
+  });
+
+  var fbView = null;
+  var tabBtn = document.getElementById('tabBtn');
+  var tabCtl = document.getElementById('tabControls');
+  var tabPosBtn = document.getElementById('tabPosBtn');
+  function setFbView(v) {
+    fbView = v;
+    var app = document.getElementById('app');
+    app.classList.toggle('no-fb', v === null);
+    app.classList.toggle('no-fretboard', v !== 'fret');
+    app.classList.toggle('no-tab', v !== 'tab');
+    fbBtn.setAttribute('aria-pressed', String(v === 'fret'));
+    tabBtn.setAttribute('aria-pressed', String(v === 'tab'));
+    refreshHelp();
+  }
+  fbBtn.addEventListener('click', function () { setFbView(fbView === 'fret' ? null : 'fret'); });
+  tabBtn.addEventListener('click', function () { setFbView(fbView === 'tab' ? null : 'tab'); });
+  tabPosBtn.addEventListener('click', function () {
+    if (lastTab && lastTab[2]) { nextPosition(); return; }
+    state.tabPos = (state.tabPos || 0) + 1;
+    if (lastTab) renderTab(lastTab[0], lastTab[1], lastTab[2], lastTab[3]);
+  });
+
+  var ABS_OPEN = [40, 45, 50, 55, 59, 64];
+  var lastTab = null;
+  function renderTab(vis, rootPc, info, modeInfo) {
+    lastTab = [vis, rootPc, info, modeInfo];
+    tabCtl.style.display = 'none';
+    var svg = document.getElementById('tabsvg');
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    function add(tag, attrs, text) {
+      var e = document.createElementNS(NS, tag);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      if (text !== undefined && text !== null) e.textContent = text;
+      svg.appendChild(e);
+      return e;
+    }
+    var Y0 = 90, GAP = 28, X0 = 150, XR = 1960;
+    function yOf(st) { return Y0 + (5 - st) * GAP; }
+    var strNames = ['E', 'A', 'D', 'G', 'B', 'e'];
+    for (var st = 0; st < 6; st++) {
+      add('line', { x1: X0 - 20, y1: yOf(st), x2: XR, y2: yOf(st), 'class': 'tb-line' });
+      add('text', { x: 108, y: yOf(st) + 7, 'class': 'tb-str' }, strNames[st]);
+    }
+    add('line', { x1: X0 - 20, y1: Y0, x2: X0 - 20, y2: Y0 + 5 * GAP, 'class': 'tb-bar' });
+    add('line', { x1: XR, y1: Y0, x2: XR, y2: Y0 + 5 * GAP, 'class': 'tb-bar' });
+    function note(x, st2, fret, pc) {
+      add('circle', { cx: x, cy: yOf(st2), r: 15, 'class': 'tb-dot' });
+      add('text', { x: x, y: yOf(st2) + 8, 'class': 'tb-num' }, String(fret));
+    }
+    var t = STR[state.lang];
+    if (info) {
+      var list = voicings(info.pc, info.q);
+      var fr = list[state.vIdx % list.length].frets;
+      tabCtl.style.display = 'flex';
+      tabPosBtn.textContent = t.positionPrefix + ((state.vIdx % list.length) + 1) + '/' + list.length;
+      add('text', { x: X0 + 60, y: Y0 - 24, 'class': 'tb-sub', 'text-anchor': 'middle' }, t.tabChord);
+      add('text', { x: X0 + 330, y: Y0 - 24, 'class': 'tb-sub' }, t.tabArp);
+      var k = 0;
+      for (var s2 = 0; s2 < 6; s2++) {
+        if (fr[s2] === null) { add('text', { x: X0 + 60, y: yOf(s2) + 8, 'class': 'tb-x' }, 'x'); continue; }
+        var pc2 = normalize12(OPEN[s2] + fr[s2]);
+        note(X0 + 60, s2, fr[s2], pc2);
+        var xa = X0 + 440 + k * 100;
+        add('text', { x: xa, y: Y0 - 24, 'class': 'tb-name' }, nm(pc2));
+        note(xa, s2, fr[s2], pc2);
+        k++;
+      }
+      return;
+    }
+    var root = modeInfo ? modeInfo.pc : rootPc;
+    var positions = [];
+    [0, 1].forEach(function (sp) {
+      for (var fp = 0; fp <= 24; fp++) if ((OPEN[sp] + fp) % 12 === root) positions.push({ st: sp, f: fp });
+    });
+    positions.sort(function (a, b) { return a.f - b.f || a.st - b.st; });
+    var idx = 0;
+    if (modeInfo) {
+      if (state.tabPos === undefined) { state.tabPos = 0; state.tabKey = ''; }
+      var tkey = root + '|' + state.modeSel;
+      if (state.tabKey !== tkey) { state.tabKey = tkey; state.tabPos = 0; }
+      idx = state.tabPos % positions.length;
+      tabCtl.style.display = 'flex';
+      tabPosBtn.textContent = t.positionPrefix + (idx + 1) + '/' + positions.length;
+    }
+    var st0 = positions[idx].st;
+    var rf = positions[idx].f;
+    var lo = Math.max(0, rf - 1), hi = Math.min(24, lo + 4);
+    var rootPitch = ABS_OPEN[st0] + rf;
+    var seen = {}, entries = [];
+    for (var s3 = st0; s3 < 6; s3++) {
+      for (var f = lo; f <= hi; f++) {
+        var pc3 = normalize12(OPEN[s3] + f);
+        var pitch = ABS_OPEN[s3] + f;
+        if (vis[pc3] && pitch >= rootPitch && !seen[pitch]) { seen[pitch] = true; entries.push({ st: s3, f: f, pc: pc3, pitch: pitch }); }
+      }
+    }
+    entries.sort(function (a, b) { return a.pitch - b.pitch; });
+    var dx = Math.min(100, (XR - X0 - 70) / Math.max(entries.length, 1));
+    entries.forEach(function (e, i) {
+      var x = X0 + 50 + i * dx;
+      add('text', { x: x, y: Y0 - 24, 'class': 'tb-name' }, nm(e.pc));
+      note(x, e.st, e.f, e.pc);
+    });
+  }
+
+  function nextPosition() { if (!lastInfo || lastN < 2) return; state.vIdx = (state.vIdx + 1) % lastN; renderDiagram(lastInfo); if (lastTab) renderTab(lastTab[0], lastTab[1], lastTab[2], lastTab[3]); }
+  posBtn.addEventListener('click', nextPosition);
+  posBtn.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nextPosition(); } });
+
+  var drag = null, suppressClick = false;
+  function startModeDrag(e) { if (e.pointerType === 'mouse' && e.button !== 0) return; drag = { kind: 'modes', id: e.pointerId, x0: e.clientX, off0: state.mOffset, moved: false }; }
+  window.addEventListener('pointermove', function (e) {
+    if (!drag || e.pointerId !== drag.id) return;
+    var dx = e.clientX - drag.x0;
+    if (!drag.moved) { if (Math.abs(dx) < 8) return; drag.moved = true; dial.classList.add('dragging'); }
+    var target = drag.off0 + Math.round(dx / 40);
+    if (drag.kind === 'notes') {
+      if (target !== state.offset) { state.offset = target; place(); }
+    } else if (target !== state.mOffset) {
+      state.mOffset = target; placeModes();
+    }
+  });
+  function endDrag(e) { if (!drag || e.pointerId !== drag.id) return; if (drag.moved) { suppressClick = true; setTimeout(function () { suppressClick = false; }, 0); dial.classList.remove('dragging'); } drag = null; }
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+
+  document.addEventListener('click', function (e) {
+    if (suppressClick) return;
+    if (state.selected === null && !state.fbPick && state.modeSel === null) return;
+    var t = e.target;
+    if (t && t.closest && t.closest('.fb-wrap, .tab-wrap, .controls, .lang-seg, .keep')) return;
+    var row = document.getElementById('fbBtnRow');
+    if (row && e.clientY >= row.getBoundingClientRect().top) return;
+    var r = dial.getBoundingClientRect();
+    var d = Math.sqrt(Math.pow(e.clientX - (r.left + r.width / 2), 2) + Math.pow(e.clientY - (r.top + r.height / 2), 2));
+    if (d <= r.width * 0.49) return;
+    state.selected = null; state.fbPick = null; state.chordOnly = false; state.modeSel = null; highlight(-1); placeModes();
+  });
+
+  function refreshHelp() {
+    var t = STR[state.lang];
+    document.getElementById('helpTitle').textContent = t.helpTitle;
+    document.getElementById('helpToggles').innerHTML = t.helpToggles;
+    document.getElementById('helpNotes').innerHTML = t.helpNotes;
+    document.getElementById('helpModes').innerHTML = t.helpModes;
+    document.getElementById('helpChords').innerHTML = t.helpChords;
+    document.getElementById('helpFifths').innerHTML = t.helpFifths;
+    document.getElementById('helpReset').innerHTML = t.helpReset;
+    document.getElementById('helpDiagram').innerHTML = t.helpDiagram;
+    document.getElementById('helpTab').innerHTML = t.helpTab;
+    document.getElementById('helpCtx').textContent = (state.selected !== null || state.modeSel !== null) ? t.ctxSel : t.ctxNone;
+    var fb = document.getElementById('helpFb');
+    fb.textContent = t.ctxFb;
+    fb.style.display = fbView === 'fret' ? '' : 'none';
+  }
+
+  function relabel() { placeModes(); }
+
+  function setLanguage(lang) {
+    if (lang !== 'fr' && lang !== 'en') return;
+    state.lang = lang;
+    state.notation = 'en';
+    titleEl.textContent = STR[lang].title;
+    capEl.textContent = STR[lang].scaleCap;
+    btnMajor.textContent = STR[lang].scales.major;
+    btnNatural.textContent = STR[lang].scales.natural;
+    btnHarmonic.textContent = STR[lang].scales.harmonic;
+    btnHarmajor.textContent = STR[lang].scales.harmajor;
+    btnMelodic.textContent = STR[lang].scales.melodic;
+    fifthsBtn.textContent = STR[lang].fifths;
+    fbBtn.textContent = STR[lang].fretboard;
+    tabBtn.textContent = STR[lang].tabBtn;
+    tabBtn.setAttribute('title', STR[lang].tabTitle);
+    tabPosBtn.setAttribute('title', STR[lang].tabPosTitle);
+    helpBtn.setAttribute('title', STR[lang].helpTitle);
+    helpBtn.setAttribute('aria-label', STR[lang].helpTitle);
+    modesBtn.textContent = STR[lang].modesBtn;
+    chordsBtn.textContent = STR[lang].chordsBtn;
+    modesBtn.setAttribute('title', STR[lang].modesTitle);
+    chordsBtn.setAttribute('title', STR[lang].chordsTitle);
+    resetBtn.setAttribute('title', STR[lang].resetTitle);
+    resetBtn.setAttribute('aria-label', STR[lang].resetTitle);
+    posBtn.setAttribute('aria-label', STR[lang].posBtnAria);
+    langFrBtn.setAttribute('aria-pressed', String(lang === 'fr'));
+    langEnBtn.setAttribute('aria-pressed', String(lang === 'en'));
+    placeModes();
+  }
+
+  langFrBtn.addEventListener('click', function () { setLanguage('fr'); });
+  langEnBtn.addEventListener('click', function () { setLanguage('en'); });
+
+  function initUIStrings() {
+    posBtn.setAttribute('aria-label', STR[state.lang].posBtnAria);
+    fifthsBtn.setAttribute('title', STR[state.lang].fifths);
+    fbBtn.setAttribute('title', STR[state.lang].fretboard);
+  }
+
+  initUIStrings();
+  build();
+  setLanguage(state.lang || 'fr');
+
+})();
+</script>
+</body>
+</html>
